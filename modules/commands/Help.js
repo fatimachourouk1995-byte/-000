@@ -5,7 +5,7 @@ module.exports.config = {
   credits: "حمودي سان 🇸🇩",
   description: "قائمة الأوامر كاملة مزخرفة",
   commandCategory: "النظام",
-  usages: "[رقم الصفحة/اسم الأمر]",
+  usages: "[اسم الأمر]",
   cooldowns: 5,
   envConfig: {
     autoUnsend: true,
@@ -15,10 +15,10 @@ module.exports.config = {
 
 module.exports.languages = {
   "en": {
-    "moduleInfo": "───═━━━━━\n⏤͟͟͞͞   𝙸𝙽𝙵𝙾𝚁𝙼𝙰𝚃𝙸𝙾𝙽\n────────\n⑉ Name: %1\n⑉ Desc: %2\n⑉ Usage: %3\n⑉ Category: %4\n⑉ Wait: %5s\n⑉ Auth: %6\n────────\n.𝙲𝚁𝙴𝙳𝙸𝚃𝚂: %7",
-    "user": "User",
-    "adminGroup": "Group Admin",
-    "adminBot": "Bot Admin"
+    "moduleInfo": "◈ ───『معلومات الأمر』─── ◈\n\n⑉ الاسم: %1\n⑉ الوصف: %2\n⑉ الاستخدام: %3\n⑉ الفئة: %4\n⑉ الانتظار: %5s\n⑉ الصلاحية: %6\n\n◈ ─────────────── ◈\n.المطور: %7",
+    "user": "مستخدم",
+    "adminGroup": "ادمن المجموعة",
+    "adminBot": "ادمن البوت"
   }
 };
 
@@ -59,31 +59,32 @@ module.exports.run = function ({ api, event, args, getText }) {
   const prefix = (threadSetting.hasOwnProperty("PREFIX")) ? threadSetting.PREFIX : global.config.PREFIX;
 
   if (!command) {
-    const arrayInfo = [];
-    const page = parseInt(args[0]) || 1;
-    const numberOfOnePage = 10; // عدد الأوامر في كل صفحة
-    
-    for (var [name] of (commands)) {
-      arrayInfo.push(name);
-    }
-    arrayInfo.sort();
-
-    const totalPages = Math.ceil(arrayInfo.length / numberOfOnePage);
-    const startSlice = numberOfOnePage * page - numberOfOnePage;
-    const returnArray = arrayInfo.slice(startSlice, startSlice + numberOfOnePage);
-
-    let msg = "───═━━━━━\n";
-    msg += "⏤͟͟͞͞   𝙲𝙼𝙳    𝙻𝙸𝚂𝚃\n";
-    msg += "────────\n";
-
-    for (let item of returnArray) {
-      msg += `⑉ ${item}\n`;
+    // تجميع الأوامر حسب الفئة
+    const categoryMap = {};
+    for (var [name, cmd] of commands) {
+      const cat = (cmd.config && cmd.config.commandCategory) ? cmd.config.commandCategory : "undefined";
+      if (!categoryMap[cat]) categoryMap[cat] = [];
+      categoryMap[cat].push(name);
     }
 
-    msg += "────────\n";
-    msg += `.𝙰𝙻𝙻 𝙲𝙼𝙳 : ${arrayInfo.length}\n`;
-    msg += `.𝙿𝙰𝙶𝙴 ${page} 𝙾𝙵 ${totalPages}\n`;
-    msg += "────────";
+    // بناء الرسالة
+    let msg = "◈ ───『قائمة الاوامر』─── ◈\n\n";
+    let counter = 1;
+
+    for (const cat in categoryMap) {
+      categoryMap[cat].sort();
+      msg += `◯ ${cat} :\n`;
+      for (const name of categoryMap[cat]) {
+        msg += `${counter}👑${name}\n`;
+        counter++;
+      }
+      msg += "———————————————\n";
+    }
+
+    msg += "\n◈ ─────────────── ◈\n";
+    msg += `عدد الاوامر هو: ${counter - 1}\n`;
+    msg += "استمتع مع داروين 🧡🟠\n";
+    msg += "👑داروين BOT👑";
 
     return api.sendMessage(msg, threadID, async (error, info) => {
       if (autoUnsend) {
