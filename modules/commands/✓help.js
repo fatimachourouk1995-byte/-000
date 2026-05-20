@@ -27,7 +27,7 @@ module.exports.handleEvent = function ({ api, event, getText }) {
   const { commands } = global.client;
   const { threadID, messageID, body } = event;
 
-  if (!body || typeof body == "cmd" || body.indexOf("help") != 0) return;
+  if (!body || typeof body !== "string" || body.indexOf("help") != 0) return;
   const splitBody = body.slice(body.indexOf("help")).trim().split(/\s+/);
   if (splitBody.length == 1 || !commands.has(splitBody[1].toLowerCase())) return;
 
@@ -63,7 +63,6 @@ module.exports.run = function({ api, event, args, getText }) {
     const arrayInfo = [];
     const page = parseInt(args[0]) || 1;
     const numberOfOnePage = 100;
-    let i = 0;
 
     for (var [name, value] of commands) {
       arrayInfo.push(name);
@@ -72,27 +71,37 @@ module.exports.run = function({ api, event, args, getText }) {
     arrayInfo.sort((a, b) => a.localeCompare(b));
 
     const startSlice = numberOfOnePage * page - numberOfOnePage;
-    i = startSlice;
     const returnArray = arrayInfo.slice(startSlice, startSlice + numberOfOnePage);
 
-    // ✨ الشكل الجديد
-    let msg = `───═━━━━━
-⏤͟͟͞͞   𝙲𝙼𝙳    𝙻𝙸𝚂𝚃
-────────
-`;
-
-    for (let item of returnArray) {
-      msg += `⑉ ${item}\n`;
+    // تجميع الأوامر حسب الفئة
+    const categories = {};
+    for (var [name, cmd] of commands) {
+      const cat = cmd.config.commandCategory || "undefined";
+      if (!categories[cat]) categories[cat] = [];
+      categories[cat].push(cmd.config.name);
     }
 
-    let text = `────────
-.𝙰𝙻𝙻 𝙲𝙼𝙳 : ${arrayInfo.length}
-.𝙿𝙰𝙶𝙴 ${page} 𝙾𝙵 ${Math.ceil(arrayInfo.length / numberOfOnePage)}
-────────`;
+    let msg = `◈ ───『قائمة الاوامر』─── ◈\n\n`;
+    let counter = 1;
 
-    return api.sendMessage(msg + text, threadID, async (error, info) => {
+    for (const cat in categories) {
+      msg += `◯ ${cat} :\n`;
+      for (const cmdName of categories[cat]) {
+        msg += `${counter}👑${cmdName}\n`;
+        counter++;
+      }
+      msg += `———————————————\n`;
+    }
+
+    msg += `\n◈ ─────────────── ◈\n`;
+    msg += `عدد الاوامر هو: ${arrayInfo.length}\n`;
+    msg += `استمتع مع lwsyw\n\n`;
+    msg += `داروين 🧡🟠\n`;
+    msg += `👑lwsyw𝓑𝓸𝒕👑`;
+
+    return api.sendMessage(msg, threadID, async (error, info) => {
       if (autoUnsend) {
-        await new Promise(resolve => setTimeout(resolve, delayUnsend * 10000000));
+        await new Promise(resolve => setTimeout(resolve, delayUnsend * 1000));
         return api.unsendMessage(info.messageID);
       } else return;
     });
